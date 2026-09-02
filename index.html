@@ -183,14 +183,11 @@ const ITEMS = [
 ];
 
 function currentMonthKey(){ return new Date().toISOString().slice(0,7); }
-function daysInMonth(monthKey){
-  const [y,m] = monthKey.split('-').map(Number);
-  return new Date(y, m, 0).getDate();
-}
 function blankDays(monthKey){
-  const n = daysInMonth(monthKey);
+  // Always 31 rows, matching the paper form's fixed template — it's a
+  // generic form reused for any month, not resized per actual month length.
   const days = [];
-  for(let d=1; d<=n; d++){
+  for(let d=1; d<=31; d++){
     const row = {day:d, checkedBy:''};
     ITEMS.forEach(it=> row[it.k] = false);
     days.push(row);
