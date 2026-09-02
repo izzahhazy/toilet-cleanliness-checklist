@@ -1,213 +1,471 @@
-/**
- * TOILET CLEANLINESS CHECKLIST — Google Sheet backend
- * HEXA FOOD SDN. BHD. (HEXA 3) — Doc No. HX3-F57
- *
- * SETUP (one-time):
- * 1. Open/create a blank Google Sheet.
- * 2. Extensions -> Apps Script.
- * 3. Delete the default code, paste in ALL of this file.
- * 4. Deploy -> New deployment -> type: Web app.
- *      Execute as: Me
- *      Who has access: Anyone
- * 5. Deploy, authorize your Google account.
- * 6. Copy the Web app URL it gives you.
- * 7. Paste that URL into the form's "Google Sheet" tab, tap "Save URL".
- *
- * Data is stored as one JSON record per month in a hidden "_Data" sheet,
- * and automatically mirrored into a human-readable tab per month (e.g.
- * "August 2026") that matches the paper form's layout for printing.
- */
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Toilet Cleanliness Checklist — HEXA FOOD SDN. BHD. (HEXA 3)</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&family=Dancing+Script:wght@600;700&display=swap');
+  :root{
+    --ink:#1F2A24; --ink-soft:#4A554E; --paper:#F6F7F3; --card:#FFFFFF;
+    --line:#D7DCD2; --line-strong:#B7C0AF; --green:#2E7D5B; --green-100:#E1F0E6;
+    --green-800:#1B4A36; --amber:#B9791A; --amber-100:#FBEFDA; --amber-800:#6B4408;
+    --red:#B23A2E; --red-100:#FBEAE7;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{background:var(--paper);color:var(--ink);font-family:'Inter',system-ui,-apple-system,sans-serif;padding:14px;}
+  .mono{font-family:'IBM Plex Mono',monospace;}
+  .wrap{max-width:1000px;margin:0 auto;}
+  .apibar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;background:#fff7e6;border:1px solid #e8c778;border-radius:8px;padding:8px 12px;margin-bottom:12px;font-size:12.5px;color:#6B4408;}
+  .apibar.ok{background:var(--green-100);border-color:var(--green);color:var(--green-800);}
+  .apibar a{color:inherit;font-weight:700;text-decoration:underline;cursor:pointer;}
+  .masthead{display:grid;grid-template-columns:1fr 170px;border:1.5px solid var(--ink);background:var(--card);border-radius:6px;overflow:hidden;margin-bottom:14px;}
+  .masthead-main{display:flex;flex-direction:column;justify-content:center;gap:2px;padding:12px 14px;border-right:1.5px solid var(--ink);text-align:center;}
+  .masthead-main .co{font-weight:700;font-size:14px;}
+  .masthead-main .title{font-weight:600;font-size:14px;color:var(--green-800);}
+  .masthead-meta{display:flex;flex-direction:column;font-size:11px;}
+  .masthead-meta div{display:flex;justify-content:space-between;gap:6px;padding:5px 10px;border-bottom:1px solid var(--line);}
+  .masthead-meta div:last-child{border-bottom:none;}
+  .masthead-meta span:first-child{color:var(--ink-soft);}
+  .masthead-meta span:last-child{font-family:'IBM Plex Mono',monospace;font-weight:600;}
+  .tabs{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap;}
+  .tab{flex:1;min-width:120px;text-align:center;padding:10px 8px;border:1px solid var(--line-strong);border-radius:8px;background:var(--card);font-weight:600;font-size:13px;color:var(--ink-soft);cursor:pointer;user-select:none;}
+  .tab.active{background:var(--ink);border-color:var(--ink);color:#fff;}
+  .panel{display:none;}
+  .panel.active{display:block;}
+  .controls{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px;margin-bottom:14px;}
+  .field{display:flex;flex-direction:column;gap:4px;}
+  .field label{font-size:11px;font-weight:600;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.03em;}
+  .field input{font-family:inherit;font-size:14px;padding:8px 10px;border:1px solid var(--line-strong);border-radius:6px;background:#fff;color:var(--ink);}
+  .btn{font-family:inherit;font-weight:600;font-size:13.5px;padding:9px 16px;border-radius:7px;border:1px solid var(--line-strong);background:#fff;color:var(--ink);cursor:pointer;}
+  .btn:active{transform:scale(.98);}
+  .btn-primary{background:var(--green);border-color:var(--green);color:#fff;}
+  .btn-danger{color:var(--red);border-color:var(--red-100);}
+  .status-pill{font-size:11.5px;font-weight:600;padding:5px 10px;border-radius:20px;background:var(--green-100);color:var(--green-800);display:inline-block;}
+  .status-pill.unsaved{background:var(--amber-100);color:var(--amber-800);}
+  .tblwrap{overflow-x:auto;background:var(--card);border:1px solid var(--line);border-radius:10px;}
+  table.grid{border-collapse:collapse;width:100%;min-width:820px;font-size:12.5px;}
+  table.grid th{background:var(--ink);color:#fff;padding:6px 4px;font-size:10.5px;text-transform:uppercase;letter-spacing:.02em;text-align:center;}
+  table.grid td{border-bottom:1px solid var(--line);padding:4px;text-align:center;}
+  table.grid td.day{font-family:'IBM Plex Mono',monospace;font-weight:600;color:var(--ink-soft);width:34px;}
+  .chip{width:28px;height:28px;border:1px solid var(--line-strong);border-radius:6px;background:var(--paper);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;font-weight:700;color:var(--line-strong);}
+  .chip.on{background:var(--green-100);border-color:var(--green);color:var(--green);}
+  .checkedby-input{width:90px;font-family:'Dancing Script',cursive;font-size:16px;font-weight:600;color:var(--green-800);border:1px solid var(--line);border-radius:5px;padding:3px 6px;text-align:center;}
+  .footer-note{font-size:11.5px;color:var(--ink-soft);margin:12px 0;line-height:1.6;}
+  .actionbar{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px;align-items:center;}
+  .checkfield{display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600;color:var(--ink-soft);}
+  .settings{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px;margin-bottom:14px;}
+  .settings-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+  .settings-row input{flex:1;min-width:220px;font-family:inherit;font-size:13px;padding:8px 10px;border:1px solid var(--line-strong);border-radius:6px;}
+  .hint{font-size:11.5px;color:var(--ink-soft);margin-top:8px;line-height:1.5;}
+  .hint code{background:var(--paper);padding:1px 5px;border-radius:4px;font-family:'IBM Plex Mono',monospace;font-size:11px;}
+  .recrow{display:flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--line);border-radius:8px;padding:10px 12px;font-size:13px;margin-bottom:8px;}
+  .recrow .m{font-weight:700;flex:1;}
+  .recrow .btns{display:flex;gap:6px;}
 
-const DATA_SHEET = '_Data';
-const COMPANY = 'HEXA FOOD SDN. BHD. (HEXA 3)';
-const DOC_NO = 'HX3-F57';
-const ISSUE_NO = '1';
-const ISSUE_DATE = '01/03/2022';
+  #printRoot{display:none;}
+  @page{ size: A4 portrait; margin: 8mm; }
+  @media print{
+    body *{visibility:hidden;}
+    #printRoot, #printRoot *{visibility:visible;}
+    #printRoot{display:block;position:absolute;left:0;top:0;width:100%;}
+  }
+  .ppage-head{display:grid;grid-template-columns:1fr 130px;border:1px solid #333;margin-bottom:8px;border-radius:3px;overflow:hidden;}
+  .ppage-head .l{padding:7px 9px;display:flex;flex-direction:column;justify-content:center;gap:3px;border-right:1px solid #333;text-align:center;}
+  .ppage-head .l b{font-size:12px;}
+  .ppage-head .l span{font-size:11px;font-weight:600;color:#1B4A36;}
+  .ppage-head .r{padding:6px 9px;display:flex;flex-direction:column;gap:2px;justify-content:center;}
+  .ppage-head .r div{display:flex;justify-content:space-between;font-size:9px;}
+  .ppage-meta{font-size:11px;margin-bottom:7px;}
+  .ptable{width:100%;border-collapse:collapse;font-size:9.5px;}
+  .ptable th,.ptable td{border:0.75px solid #555;padding:3px 2px;text-align:center;}
+  .ptable th{background:#f0f0f0;font-size:8.5px;}
+  .ptable td.psig{font-family:'Dancing Script',cursive;font-size:12px;}
+  .ppage-foot{font-size:8.5px;margin-top:6px;line-height:1.4;color:#333;}
+</style>
+</head>
+<body>
+
+<div class="wrap" id="app">
+
+  <div class="apibar" id="apiBar">
+    Google Sheet not connected yet — data will only stay on this device/session.
+    <a id="apiBarLink">Go to setup</a>
+  </div>
+
+  <div class="masthead">
+    <div class="masthead-main">
+      <div class="co">HEXA FOOD SDN. BHD. (HEXA 3)</div>
+      <div class="title">Toilet Cleanliness Checklist — Digital</div>
+    </div>
+    <div class="masthead-meta">
+      <div><span>Doc No.</span><span>HX3-F57</span></div>
+      <div><span>Issue No.</span><span>1</span></div>
+      <div><span>Issue Date</span><span>01/03/2022</span></div>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active" data-panel="fill">Fill checklist</div>
+    <div class="tab" data-panel="records">Records / Print</div>
+    <div class="tab" data-panel="settings">Google Sheet</div>
+  </div>
+
+  <div class="panel active" id="panel-fill">
+    <div class="controls">
+      <div class="field">
+        <label>Month / Year</label>
+        <input type="month" id="monthInput">
+      </div>
+      <div class="field" style="margin-left:auto;">
+        <span class="status-pill" id="statusPill">Ready</span>
+      </div>
+    </div>
+
+    <div class="tblwrap">
+      <table class="grid" id="gridTable"></table>
+    </div>
+
+    <div class="footer-note">
+      Remark: Checking time : Morning<br>
+      Please (✓) when done checking / cleaning activities.
+    </div>
+
+    <div class="actionbar">
+      <button class="btn btn-primary" id="saveBtn">Save (online)</button>
+      <label class="checkfield"><input type="checkbox" id="printHeaderToggle" checked> Include header when printing</label>
+      <button class="btn" id="printBtn">Print</button>
+      <button class="btn btn-danger" id="deleteBtn">Delete this month's data</button>
+    </div>
+  </div>
+
+  <div class="panel" id="panel-records">
+    <div class="controls">
+      <button class="btn" id="refreshRecordsBtn">Refresh list</button>
+    </div>
+    <div id="recordsList"><div class="footer-note" style="padding:16px;text-align:center;">Loading…</div></div>
+  </div>
+
+  <div class="panel" id="panel-settings">
+    <div class="settings">
+      <div style="font-weight:700;margin-bottom:10px;">Google Sheet connection</div>
+      <div class="settings-row">
+        <input type="text" id="sheetUrlInput" placeholder="Paste your Google Apps Script Web App URL here">
+        <button class="btn btn-primary" id="saveUrlBtn">Save URL</button>
+      </div>
+      <div class="hint">
+        Every tick is saved straight to your Google Sheet, one tab per month (e.g. <code>August 2026</code>), laid out to match this form so you can print directly from Sheets too.<br><br>
+        <b>One-time setup:</b><br>
+        1. Open a blank Google Sheet → <b>Extensions → Apps Script</b><br>
+        2. Copy all the code from the included file <code>toilet_apps_script.gs</code>, paste it in, then <b>Deploy → New deployment → Web app</b>, "Who has access" = Anyone<br>
+        3. Copy the deployment URL, paste it above, tap Save URL.
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div id="printRoot"></div>
+
+<script>
+function safeGet(k){ try{ return localStorage.getItem(k) || ''; }catch(e){ return ''; } }
+function safeSet(k,v){ try{ localStorage.setItem(k,v); }catch(e){} }
+
+let apiUrl = safeGet('toilet_api_url') || '';
+const el = id => document.getElementById(id);
+const memStore = {};
+
 const ITEMS = [
-  {k:'toiletBowl', l:'Toilet Bowl'}, {k:'waterHose', l:'Water Hose'}, {k:'floor', l:'Floor'},
-  {k:'sink', l:'Sink'}, {k:'mirror', l:'Mirror'}, {k:'handSoap', l:'Hand Soap'},
+  {k:'toiletBowl', l:'Toilet<br>Bowl'}, {k:'waterHose', l:'Water<br>Hose'}, {k:'floor', l:'Floor'},
+  {k:'sink', l:'Sink'}, {k:'mirror', l:'Mirror'}, {k:'handSoap', l:'Hand<br>Soap'},
   {k:'tissue', l:'Tissue'}, {k:'door', l:'Door'}, {k:'dustbin', l:'Dustbin'}
 ];
 
-function getDataSheet_(){
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
-  let sheet = ss.getSheetByName(DATA_SHEET);
-  if(!sheet){
-    sheet = ss.insertSheet(DATA_SHEET);
-    sheet.appendRow(['Month','JSON']);
-    sheet.setFrozenRows(1);
-    try{ sheet.hideSheet(); }catch(e){}
+function currentMonthKey(){ return new Date().toISOString().slice(0,7); }
+function daysInMonth(monthKey){
+  const [y,m] = monthKey.split('-').map(Number);
+  return new Date(y, m, 0).getDate();
+}
+function blankDays(monthKey){
+  const n = daysInMonth(monthKey);
+  const days = [];
+  for(let d=1; d<=n; d++){
+    const row = {day:d, checkedBy:''};
+    ITEMS.forEach(it=> row[it.k] = false);
+    days.push(row);
   }
-  // Force column A to plain text — otherwise Sheets silently auto-converts
-  // a value like "2026-08" into an actual Date, which then never
-  // string-matches the plain "2026-08" a GET request compares against.
-  sheet.getRange('A:A').setNumberFormat('@');
-  return sheet;
+  return days;
 }
-function normalizeCell_(v){
-  if(Object.prototype.toString.call(v) === '[object Date]'){
-    return Utilities.formatDate(v, Session.getScriptTimeZone(), 'yyyy-MM');
+function toInitials(v){
+  const parts = (v||'').trim().split(/\s+/).filter(Boolean);
+  if(parts.length===0) return '';
+  if(parts.length===1) return parts[0];
+  return parts.map(w=>w[0].toUpperCase()).join('');
+}
+function escapeHtml(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;'); }
+
+let state = { month: currentMonthKey(), days: blankDays(currentMonthKey()) };
+let dirty = false;
+
+function setStatus(text, kind){
+  const p = el('statusPill');
+  p.textContent = text;
+  p.className = 'status-pill' + (kind==='unsaved' ? ' unsaved' : '');
+}
+function refreshApiBar(){
+  const bar = el('apiBar');
+  if(apiUrl){
+    bar.classList.add('ok');
+    bar.innerHTML = 'Connected to Google Sheet. Records are saved online and shared with anyone using this same connection.';
+  } else {
+    bar.classList.remove('ok');
+    bar.innerHTML = 'Google Sheet not connected yet — data will only stay on this device/session. <a id="apiBarLink">Go to setup</a>';
+    const link = el('apiBarLink');
+    if(link) link.addEventListener('click', ()=> document.querySelector('[data-panel="settings"]').click());
   }
-  return String(v);
 }
-function findRow_(sheet, month){
-  const values = sheet.getDataRange().getValues();
-  for(let i=1;i<values.length;i++){
-    if(normalizeCell_(values[i][0])===month) return i+1;
+
+// ---------------- Data layer ----------------
+async function apiGetMonth(month){
+  if(apiUrl){
+    try{
+      const res = await fetch(apiUrl + '?action=get&month=' + encodeURIComponent(month));
+      const text = await res.text();
+      let j; try{ j = JSON.parse(text); }catch(e){ console.error('[toilet] GET: non-JSON response:', text); j = null; }
+      if(j && j.ok && j.data) return j.data;
+      if(j && j.ok) return null;
+      if(j && j.ok===false) console.error('[toilet] GET: script error:', j.error);
+    }catch(e){ console.error('[toilet] GET: fetch failed:', e); }
   }
-  return -1;
+  return memStore[month] || null;
 }
-function upsertMonth_(data){
-  const sheet = getDataSheet_();
-  const row = findRow_(sheet, data.month);
-  const json = JSON.stringify(data);
-  if(row>0){ sheet.getRange(row,1,1,2).setValues([[data.month, json]]); }
-  else { sheet.appendRow([data.month, json]); }
-  SpreadsheetApp.flush();
-  rebuildMonthSheet_(data.month);
+async function apiSaveMonth(data){
+  memStore[data.month] = data;
+  if(!apiUrl) return {ok:false, reason:'no-url'};
+  try{
+    const res = await fetch(apiUrl, {method:'POST', headers:{'Content-Type':'text/plain'},
+      body: JSON.stringify({action:'save', data})});
+    const text = await res.text();
+    let j; try{ j = JSON.parse(text); }catch(e){
+      console.error('[toilet] SAVE: non-JSON response:', text);
+      return {ok:false, reason:'bad-response', raw:text};
+    }
+    if(j.ok===false){ console.error('[toilet] SAVE: script error:', j.error); return {ok:false, reason:'script-error', raw:j.error}; }
+    return {ok:true};
+  }catch(e){ console.error('[toilet] SAVE: fetch failed:', e); return {ok:false, reason:'fetch-error', raw:String(e)}; }
 }
-function getMonth_(month){
-  const sheet = getDataSheet_();
-  const row = findRow_(sheet, month);
-  if(row<0) return null;
-  const json = sheet.getRange(row,2).getValue();
-  try{ return JSON.parse(json); }catch(e){ return null; }
+async function apiDeleteMonth(month){
+  if(!apiUrl) return {ok:false, reason:'no-url'};
+  try{
+    const res = await fetch(apiUrl, {method:'POST', headers:{'Content-Type':'text/plain'},
+      body: JSON.stringify({action:'delete', month})});
+    const text = await res.text();
+    let j; try{ j = JSON.parse(text); }catch(e){ return {ok:false, reason:'bad-response', raw:text}; }
+    if(j.ok===false) return {ok:false, reason:'script-error', raw:j.error};
+    return {ok:true};
+  }catch(e){ return {ok:false, reason:'fetch-error', raw:String(e)}; }
 }
-function deleteMonth_(month){
-  const sheet = getDataSheet_();
-  const row = findRow_(sheet, month);
-  if(row>0){ sheet.deleteRow(row); SpreadsheetApp.flush(); }
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
-  const pretty = ss.getSheetByName(monthSheetName_(month));
-  if(pretty) ss.deleteSheet(pretty);
-}
-
-function monthSheetName_(month){
-  const parts = month.split('-');
-  const y = parseInt(parts[0],10), m = parseInt(parts[1],10)-1;
-  const d = new Date(y, m, 1);
-  return Utilities.formatDate(d, Session.getScriptTimeZone(), 'MMMM yyyy');
-}
-
-// Rebuilds the pretty, form-shaped tab for one month from scratch.
-function rebuildMonthSheet_(month){
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
-  const name = monthSheetName_(month);
-  let sheet = ss.getSheetByName(name);
-  if(!sheet){ sheet = ss.insertSheet(name); }
-  sheet.clear();
-  sheet.clearFormats();
-
-  const data = getMonth_(month);
-  const headers = ['Day'].concat(ITEMS.map(it=>it.l)).concat(['Checked by']);
-  const colCount = headers.length;
-  sheet.setColumnWidth(1, 40);
-  for(let c=0;c<ITEMS.length;c++) sheet.setColumnWidth(2+c, 68);
-  sheet.setColumnWidth(colCount, 95);
-
-  let r = 1;
-  if(!data){
-    sheet.getRange(1,1).setValue('No records for ' + name + ' yet.');
-    return;
+async function apiListMonths(){
+  if(apiUrl){
+    try{
+      const res = await fetch(apiUrl + '?action=list');
+      const text = await res.text();
+      let j; try{ j = JSON.parse(text); }catch(e){ console.error('[toilet] LIST: non-JSON response:', text); j = null; }
+      if(j && j.ok) return j.months || [];
+      if(j && j.ok===false) console.error('[toilet] LIST: script error:', j.error);
+    }catch(e){ console.error('[toilet] LIST: fetch failed:', e); }
   }
+  return Object.keys(memStore).sort().reverse();
+}
 
-  // ---- Header block: company/title box (left) + doc info box (right),
-  // both bordered and centered, matching the paper form's masthead. ----
-  const headBlockTop = r;
-  sheet.getRange(r,1,1,4).merge().setValue(COMPANY)
-    .setFontWeight('bold').setFontSize(12)
-    .setHorizontalAlignment('center').setVerticalAlignment('middle');
-  sheet.getRange(r,colCount-1).setValue('Doc No.:').setFontWeight('bold');
-  sheet.getRange(r,colCount).setValue(DOC_NO);
-  r++;
-  sheet.getRange(r,1,1,4).merge().setValue('TOILET CLEANLINESS CHECKLIST')
-    .setFontWeight('bold').setFontSize(12).setFontColor('#1B4A36')
-    .setHorizontalAlignment('center').setVerticalAlignment('middle');
-  sheet.getRange(r,colCount-1).setValue('Issue No:').setFontWeight('bold');
-  sheet.getRange(r,colCount).setValue(ISSUE_NO);
-  r++;
-  sheet.getRange(r,colCount-1).setValue('Issue Date:').setFontWeight('bold');
-  sheet.getRange(r,colCount).setValue(ISSUE_DATE);
-  r++;
-  sheet.getRange(r,colCount-1).setValue('Page:').setFontWeight('bold');
-  sheet.getRange(r,colCount).setValue('1 of 1');
-  const headBlockBottom = r;
-  sheet.setRowHeights(headBlockTop, headBlockBottom-headBlockTop+1, 22);
-  sheet.getRange(headBlockTop,1,headBlockBottom-headBlockTop+1,colCount)
-    .setBorder(true,true,true,true,true,true);
-  r += 2;
+// ---------------- Records / Print list ----------------
+async function renderRecordsList(){
+  const wrap = el('recordsList');
+  wrap.innerHTML = '<div class="footer-note" style="padding:16px;text-align:center;">Loading…</div>';
+  const months = await apiListMonths();
+  if(months.length===0){ wrap.innerHTML = '<div class="footer-note" style="padding:16px;text-align:center;">No records yet.</div>'; return; }
+  wrap.innerHTML = '';
+  for(const m of months){
+    const row = document.createElement('div');
+    row.className = 'recrow';
+    row.innerHTML = `<span class="m">${m}</span>
+      <span class="btns">
+        <button class="btn" data-act="open">Open</button>
+        <button class="btn" data-act="print">Print</button>
+        <button class="btn btn-danger" data-act="delete">Delete</button>
+      </span>`;
+    row.querySelector('[data-act="open"]').addEventListener('click', ()=>{
+      document.querySelector('[data-panel="fill"]').click();
+      goToMonth(m);
+    });
+    row.querySelector('[data-act="print"]').addEventListener('click', async ()=>{
+      const data = await apiGetMonth(m);
+      if(!data){ alert('No data found for ' + m); return; }
+      const includeHeader = el('printHeaderToggle').checked;
+      el('printRoot').innerHTML = buildPrintPage(data, includeHeader);
+      window.print();
+    });
+    row.querySelector('[data-act="delete"]').addEventListener('click', async ()=>{
+      if(!confirm('Delete all data for ' + m + '? This cannot be undone.')) return;
+      const res = await apiDeleteMonth(m);
+      if(res.ok){ row.remove(); }
+      else alert('Could not delete — check Console (F12) or the Google Sheet connection.');
+    });
+    wrap.appendChild(row);
+  }
+}
+el('refreshRecordsBtn').addEventListener('click', renderRecordsList);
 
-  sheet.getRange(r,1).setValue('MONTH/YEAR:').setFontWeight('bold');
-  sheet.getRange(r,2,1,2).merge().setValue(data.month)
-    .setFontWeight('bold').setHorizontalAlignment('left');
-  r += 2;
-
-  // ---- Main table, centered content, matching the paper grid ----
-  const headerRow = r;
-  sheet.getRange(r,1,1,headers.length).setValues([headers])
-    .setFontWeight('bold').setBackground('#eeeeee')
-    .setHorizontalAlignment('center').setVerticalAlignment('middle').setWrap(true);
-  sheet.setRowHeight(r, 30);
-  r++;
-  const dataStart = r;
-  data.days.forEach(function(row){
-    const line = [row.day].concat(ITEMS.map(function(it){ return row[it.k] ? '\u2713' : ''; })).concat([row.checkedBy || '']);
-    sheet.getRange(r,1,1,line.length).setValues([line]).setHorizontalAlignment('center');
-    r++;
+// ---------------- Rendering ----------------
+function renderGrid(){
+  const table = el('gridTable');
+  let html = '<thead><tr><th rowspan="2">Day</th><th colspan="' + ITEMS.length + '">Item</th><th rowspan="2">Checked<br>by</th></tr><tr>';
+  ITEMS.forEach(it=> html += `<th>${it.l}</th>`);
+  html += '</tr></thead><tbody>';
+  state.days.forEach((row, idx)=>{
+    html += `<tr><td class="day">${row.day}</td>`;
+    ITEMS.forEach(it=>{
+      html += `<td><span class="chip ${row[it.k]?'on':''}" data-idx="${idx}" data-item="${it.k}">${row[it.k]?'✓':''}</span></td>`;
+    });
+    html += `<td><input class="checkedby-input" value="${(row.checkedBy||'').replace(/"/g,'&quot;')}" data-idx="${idx}" data-role="checkedby" placeholder=""></td></tr>`;
   });
-  const dataEnd = r-1;
-  sheet.getRange(headerRow,1,dataEnd-headerRow+1,headers.length).setBorder(true,true,true,true,true,true);
-  sheet.getRange(dataStart, headers.length, dataEnd-dataStart+1, 1)
-    .setFontFamily('Dancing Script').setFontSize(13).setFontColor('#1B4A36');
-  r++;
-
-  sheet.getRange(r,1,1,4).merge().setValue('Remark: Checking time : Morning').setFontSize(9).setFontStyle('italic');
-  r++;
-  sheet.getRange(r,1,1,4).merge().setValue('Please (\u2713) when done checking / cleaning activities.').setFontSize(9).setFontStyle('italic');
-
-  sheet.setFrozenRows(0);
+  html += '</tbody>';
+  table.innerHTML = html;
 }
 
-function jsonOut_(obj){
-  return ContentService.createTextOutput(JSON.stringify(obj)).setMimeType(ContentService.MimeType.JSON);
-}
-
-function listMonths_(){
-  const sheet = getDataSheet_();
-  const values = sheet.getDataRange().getValues();
-  const months = [];
-  for(let i=1;i<values.length;i++){
-    const m = normalizeCell_(values[i][0]);
-    if(m) months.push(m);
+async function goToMonth(month){
+  const existing = await apiGetMonth(month);
+  if(existing){
+    state = existing;
+    setStatus('Existing record loaded');
+  } else {
+    state = { month, days: blankDays(month) };
+    setStatus('New record');
   }
-  months.sort().reverse();
-  return months;
+  dirty = false;
+  el('monthInput').value = month;
+  renderGrid();
 }
 
-function doGet(e){
-  try{
-    const action = e.parameter.action;
-    if(action==='get') return jsonOut_({ok:true, data: getMonth_(e.parameter.month)});
-    if(action==='list') return jsonOut_({ok:true, months: listMonths_()});
-    return jsonOut_({ok:true, message:'Toilet Cleanliness Checklist API is running.'});
-  }catch(err){
-    return jsonOut_({ok:false, error:String(err)});
+el('monthInput').addEventListener('change', e=>{
+  if(e.target.value) goToMonth(e.target.value);
+});
+
+el('gridTable').addEventListener('click', e=>{
+  const chip = e.target.closest('.chip');
+  if(!chip) return;
+  const idx = +chip.dataset.idx, key = chip.dataset.item;
+  state.days[idx][key] = !state.days[idx][key];
+  dirty = true; setStatus('Unsaved','unsaved');
+  renderGrid();
+  scheduleAutoSave();
+});
+el('gridTable').addEventListener('input', e=>{
+  const t = e.target;
+  if(t.dataset.role==='checkedby'){
+    const idx = +t.dataset.idx;
+    const initials = toInitials(t.value);
+    state.days[idx].checkedBy = initials;
+    if(t.value !== initials) t.value = initials;
+    dirty = true; setStatus('Unsaved','unsaved');
+    scheduleAutoSave();
   }
-}
+});
 
-function doPost(e){
-  try{
-    const body = JSON.parse(e.postData.contents);
-    if(body.action==='save'){
-      upsertMonth_(body.data);
-      return jsonOut_({ok:true});
-    }
-    if(body.action==='delete'){
-      deleteMonth_(body.month);
-      return jsonOut_({ok:true});
-    }
-    return jsonOut_({ok:false, error:'Unknown action'});
-  }catch(err){
-    return jsonOut_({ok:false, error:String(err)});
+// ---------------- Save / Delete ----------------
+async function doSave(){
+  setStatus('Saving...','unsaved');
+  const res = await apiSaveMonth(state);
+  if(res.ok){ dirty=false; setStatus('Saved online ✓'); }
+  else if(res.reason==='no-url') setStatus('Saved on this device only','unsaved');
+  else{
+    setStatus('Save failed — see Console (F12)','unsaved');
+    console.error('[toilet] Save failed, reason:', res.reason, res.raw||'');
   }
 }
+let autoSaveTimer = null;
+function scheduleAutoSave(){
+  clearTimeout(autoSaveTimer);
+  autoSaveTimer = setTimeout(doSave, 700);
+}
+el('saveBtn').addEventListener('click', doSave);
+el('deleteBtn').addEventListener('click', async ()=>{
+  if(!confirm('Delete all data for ' + state.month + '? This cannot be undone.')) return;
+  const res = await apiDeleteMonth(state.month);
+  if(res.ok || res.reason==='no-url'){
+    delete memStore[state.month];
+    state = { month: state.month, days: blankDays(state.month) };
+    renderGrid();
+    setStatus('Deleted');
+  } else {
+    alert('Could not delete — check Console (F12) or the Google Sheet connection.');
+  }
+});
+
+// ---------------- Print ----------------
+function buildPrintPage(data, includeHeader){
+  const rowsHtml = data.days.map(row=>{
+    const cells = ITEMS.map(it=>`<td>${row[it.k]?'✓':''}</td>`).join('');
+    return `<tr><td>${row.day}</td>${cells}<td class="psig">${escapeHtml(row.checkedBy)}</td></tr>`;
+  }).join('');
+  const headerHtml = includeHeader ? `
+    <div class="ppage-head">
+      <div class="l"><b>HEXA FOOD SDN. BHD. (HEXA 3)</b><span>TOILET CLEANLINESS CHECKLIST</span></div>
+      <div class="r">
+        <div><span>Doc No.:</span><span>HX3-F57</span></div>
+        <div><span>Issue No:</span><span>1</span></div>
+        <div><span>Issue Date:</span><span>01/03/2022</span></div>
+        <div><span>Page:</span><span>1 of 1</span></div>
+      </div>
+    </div>` : '';
+  return `
+  <div>
+    ${headerHtml}
+    <div class="ppage-meta">Month/Year: <b>${data.month}</b></div>
+    <table class="ptable">
+      <thead>
+        <tr><th rowspan="2">Day</th><th colspan="${ITEMS.length}">Item</th><th rowspan="2">Checked by</th></tr>
+        <tr>${ITEMS.map(it=>`<th>${it.l.replace('<br>',' ')}</th>`).join('')}</tr>
+      </thead>
+      <tbody>${rowsHtml}</tbody>
+    </table>
+    <div class="ppage-foot">
+      Remark: Checking time : Morning<br>
+      Please (✓) when done checking / cleaning activities.
+    </div>
+  </div>`;
+}
+el('printBtn').addEventListener('click', ()=>{
+  const includeHeader = el('printHeaderToggle').checked;
+  el('printRoot').innerHTML = buildPrintPage(state, includeHeader);
+  window.print();
+});
+
+// ---------------- Google Sheet connection ----------------
+el('sheetUrlInput').value = apiUrl;
+refreshApiBar();
+el('saveUrlBtn').addEventListener('click', ()=>{
+  apiUrl = el('sheetUrlInput').value.trim();
+  safeSet('toilet_api_url', apiUrl);
+  refreshApiBar();
+  alert(apiUrl ? 'Connected. Data will now save to your Google Sheet.' : 'URL cleared.');
+});
+
+// ---------------- Tabs ----------------
+document.querySelectorAll('.tab').forEach(tab=>{
+  tab.addEventListener('click', ()=>{
+    document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+    tab.classList.add('active');
+    el('panel-'+tab.dataset.panel).classList.add('active');
+    if(tab.dataset.panel==='records') renderRecordsList();
+  });
+});
+
+// ---------------- Init ----------------
+goToMonth(state.month);
+</script>
+
+</body>
+</html>
