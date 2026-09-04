@@ -109,7 +109,7 @@
   <div class="tabs">
     <div class="tab active" data-panel="fill">Fill checklist</div>
     <div class="tab" data-panel="records">Records / Print</div>
-    <div class="tab" data-panel="settings">Google Sheet</div>
+    <div class="tab" data-panel="settings">Connection</div>
   </div>
 
   <div class="panel active" id="panel-fill">
@@ -150,16 +150,10 @@
   <div class="panel" id="panel-settings">
     <div class="settings">
       <div style="font-weight:700;margin-bottom:10px;">Google Sheet connection</div>
-      <div class="settings-row">
-        <input type="text" id="sheetUrlInput" placeholder="Paste your Google Apps Script Web App URL here">
-        <button class="btn btn-primary" id="saveUrlBtn">Save URL</button>
-      </div>
+      <div class="status-pill" style="margin-bottom:10px;">🟢 Connected automatically</div>
       <div class="hint">
-        Every tick is saved straight to your Google Sheet, one tab per month (e.g. <code>August 2026</code>), laid out to match this form so you can print directly from Sheets too.<br><br>
-        <b>One-time setup:</b><br>
-        1. Open a blank Google Sheet → <b>Extensions → Apps Script</b><br>
-        2. Copy all the code from the included file <code>toilet_apps_script.gs</code>, paste it in, then <b>Deploy → New deployment → Web app</b>, "Who has access" = Anyone<br>
-        3. Copy the deployment URL, paste it above, tap Save URL.
+        This digital form is already connected to the factory Google Sheet. New users do not need to paste or save any Apps Script URL.<br><br>
+        Every tick is saved online to the connected Google Sheet, one tab per month (e.g. <code>August 2026</code>).
       </div>
     </div>
   </div>
@@ -172,7 +166,8 @@
 function safeGet(k){ try{ return localStorage.getItem(k) || ''; }catch(e){ return ''; } }
 function safeSet(k,v){ try{ localStorage.setItem(k,v); }catch(e){} }
 
-let apiUrl = safeGet('toilet_api_url') || '';
+const DEFAULT_API_URL = 'https://script.google.com/macros/s/AKfycbyYj39CIXLn3mnJBWo0o63KPLfdM93nWEJgd3as_uGfPbPDS-h8mx7ewYMN4yBJ6vTqKQ/exec';
+let apiUrl = DEFAULT_API_URL;
 const el = id => document.getElementById(id);
 const memStore = {};
 
@@ -440,14 +435,7 @@ el('printBtn').addEventListener('click', ()=>{
 });
 
 // ---------------- Google Sheet connection ----------------
-el('sheetUrlInput').value = apiUrl;
 refreshApiBar();
-el('saveUrlBtn').addEventListener('click', ()=>{
-  apiUrl = el('sheetUrlInput').value.trim();
-  safeSet('toilet_api_url', apiUrl);
-  refreshApiBar();
-  alert(apiUrl ? 'Connected. Data will now save to your Google Sheet.' : 'URL cleared.');
-});
 
 // ---------------- Tabs ----------------
 document.querySelectorAll('.tab').forEach(tab=>{
