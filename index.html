@@ -5,84 +5,99 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Toilet Cleanliness Checklist — HEXA FOOD SDN. BHD. (HEXA 3)</title>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&family=Dancing+Script:wght@600;700&display=swap');
-  :root{
-    --ink:#1F2A24; --ink-soft:#4A554E; --paper:#F6F7F3; --card:#FFFFFF;
-    --line:#D7DCD2; --line-strong:#B7C0AF; --green:#2E7D5B; --green-100:#E1F0E6;
-    --green-800:#1B4A36; --amber:#B9791A; --amber-100:#FBEFDA; --amber-800:#6B4408;
-    --red:#B23A2E; --red-100:#FBEAE7;
-  }
-  *{box-sizing:border-box;}
-  html,body{margin:0;padding:0;}
-  body{background:var(--paper);color:var(--ink);font-family:'Inter',system-ui,-apple-system,sans-serif;padding:14px;}
-  .mono{font-family:'IBM Plex Mono',monospace;}
-  .wrap{max-width:1000px;margin:0 auto;}
-  .apibar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;background:#fff7e6;border:1px solid #e8c778;border-radius:8px;padding:8px 12px;margin-bottom:12px;font-size:12.5px;color:#6B4408;}
-  .apibar.ok{background:var(--green-100);border-color:var(--green);color:var(--green-800);}
-  .apibar a{color:inherit;font-weight:700;text-decoration:underline;cursor:pointer;}
-  .masthead{display:grid;grid-template-columns:1fr 170px;border:1.5px solid var(--ink);background:var(--card);border-radius:6px;overflow:hidden;margin-bottom:14px;}
-  .masthead-main{display:flex;flex-direction:column;justify-content:center;gap:2px;padding:12px 14px;border-right:1.5px solid var(--ink);text-align:center;}
-  .masthead-main .co{font-weight:700;font-size:14px;}
-  .masthead-main .title{font-weight:600;font-size:14px;color:var(--green-800);}
-  .masthead-meta{display:flex;flex-direction:column;font-size:11px;}
-  .masthead-meta div{display:flex;justify-content:space-between;gap:6px;padding:5px 10px;border-bottom:1px solid var(--line);}
-  .masthead-meta div:last-child{border-bottom:none;}
-  .masthead-meta span:first-child{color:var(--ink-soft);}
-  .masthead-meta span:last-child{font-family:'IBM Plex Mono',monospace;font-weight:600;}
-  .tabs{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap;}
-  .tab{flex:1;min-width:120px;text-align:center;padding:10px 8px;border:1px solid var(--line-strong);border-radius:8px;background:var(--card);font-weight:600;font-size:13px;color:var(--ink-soft);cursor:pointer;user-select:none;}
-  .tab.active{background:var(--ink);border-color:var(--ink);color:#fff;}
-  .panel{display:none;}
-  .panel.active{display:block;}
-  .controls{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px;margin-bottom:14px;}
-  .field{display:flex;flex-direction:column;gap:4px;}
-  .field label{font-size:11px;font-weight:600;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.03em;}
-  .field input{font-family:inherit;font-size:14px;padding:8px 10px;border:1px solid var(--line-strong);border-radius:6px;background:#fff;color:var(--ink);}
-  .btn{font-family:inherit;font-weight:600;font-size:13.5px;padding:9px 16px;border-radius:7px;border:1px solid var(--line-strong);background:#fff;color:var(--ink);cursor:pointer;}
-  .btn:active{transform:scale(.98);}
-  .btn-primary{background:var(--green);border-color:var(--green);color:#fff;}
-  .btn-danger{color:var(--red);border-color:var(--red-100);}
-  .status-pill{font-size:11.5px;font-weight:600;padding:5px 10px;border-radius:20px;background:var(--green-100);color:var(--green-800);display:inline-block;}
-  .status-pill.unsaved{background:var(--amber-100);color:var(--amber-800);}
-  .tblwrap{overflow-x:auto;background:var(--card);border:1px solid var(--line);border-radius:10px;}
-  table.grid{border-collapse:collapse;width:100%;min-width:820px;font-size:12.5px;}
-  table.grid th{background:var(--ink);color:#fff;padding:6px 4px;font-size:10.5px;text-transform:uppercase;letter-spacing:.02em;text-align:center;}
-  table.grid td{border-bottom:1px solid var(--line);padding:4px;text-align:center;}
-  table.grid td.day{font-family:'IBM Plex Mono',monospace;font-weight:600;color:var(--ink-soft);width:34px;}
-  .chip{width:28px;height:28px;border:1px solid var(--line-strong);border-radius:6px;background:var(--paper);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;font-weight:700;color:var(--line-strong);}
-  .chip.on{background:var(--green-100);border-color:var(--green);color:var(--green);}
-  .checkedby-input{width:90px;font-family:'Dancing Script',cursive;font-size:16px;font-weight:600;color:var(--green-800);border:1px solid var(--line);border-radius:5px;padding:3px 6px;text-align:center;}
-  .footer-note{font-size:11.5px;color:var(--ink-soft);margin:12px 0;line-height:1.6;}
-  .actionbar{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px;align-items:center;}
-  .checkfield{display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600;color:var(--ink-soft);}
-  .settings{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px;margin-bottom:14px;}
-  .settings-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
-  .settings-row input{flex:1;min-width:220px;font-family:inherit;font-size:13px;padding:8px 10px;border:1px solid var(--line-strong);border-radius:6px;}
-  .hint{font-size:11.5px;color:var(--ink-soft);margin-top:8px;line-height:1.5;}
-  .hint code{background:var(--paper);padding:1px 5px;border-radius:4px;font-family:'IBM Plex Mono',monospace;font-size:11px;}
-  .recrow{display:flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--line);border-radius:8px;padding:10px 12px;font-size:13px;margin-bottom:8px;}
-  .recrow .m{font-weight:700;flex:1;}
-  .recrow .btns{display:flex;gap:6px;}
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&family=Dancing+Script:wght@600;700&display=swap');
+:root{
+  --ink:#1F2A24; --ink-soft:#4A554E; --paper:#F6F7F3; --card:#FFFFFF;
+  --line:#D7DCD2; --line-strong:#B7C0AF; --green:#2E7D5B; --green-100:#E1F0E6;
+  --green-800:#1B4A36; --amber:#B9791A; --amber-100:#FBEFDA; --amber-800:#6B4408;
+  --red:#B23A2E; --red-100:#FBEAE7;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{background:var(--paper);color:var(--ink);font-family:'Inter',system-ui,-apple-system,sans-serif;padding:14px;}
+.mono{font-family:'IBM Plex Mono',monospace;}
+.wrap{max-width:1000px;margin:0 auto;}
 
-  #printRoot{display:none;}
-  @page{ size: A4 portrait; margin: 8mm; }
-  @media print{
-    body *{visibility:hidden;}
-    #printRoot, #printRoot *{visibility:visible;}
-    #printRoot{display:block;position:absolute;left:0;top:0;width:100%;}
-  }
-  .ppage-head{display:grid;grid-template-columns:1fr 130px;border:1px solid #333;margin-bottom:8px;border-radius:3px;overflow:hidden;}
-  .ppage-head .l{padding:7px 9px;display:flex;flex-direction:column;justify-content:center;gap:3px;border-right:1px solid #333;text-align:center;}
-  .ppage-head .l b{font-size:12px;}
-  .ppage-head .l span{font-size:11px;font-weight:600;color:#1B4A36;}
-  .ppage-head .r{padding:6px 9px;display:flex;flex-direction:column;gap:2px;justify-content:center;}
-  .ppage-head .r div{display:flex;justify-content:space-between;font-size:9px;}
-  .ppage-meta{font-size:11px;margin-bottom:7px;}
-  .ptable{width:100%;border-collapse:collapse;font-size:9.5px;}
-  .ptable th,.ptable td{border:0.75px solid #555;padding:3px 2px;text-align:center;}
-  .ptable th{background:#f0f0f0;font-size:8.5px;}
-  .ptable td.psig{font-family:'Dancing Script',cursive;font-size:12px;}
-  .ppage-foot{font-size:8.5px;margin-top:6px;line-height:1.4;color:#333;}
+.apibar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;background:#fff7e6;border:1px solid #e8c778;border-radius:8px;padding:8px 12px;margin-bottom:12px;font-size:12.5px;color:#6B4408;}
+.apibar.ok{background:var(--green-100);border-color:var(--green);color:var(--green-800);}
+.apibar a{color:inherit;font-weight:700;text-decoration:underline;cursor:pointer;}
+
+.masthead{display:grid;grid-template-columns:1fr 170px;border:1.5px solid var(--ink);background:var(--card);border-radius:6px;overflow:hidden;margin-bottom:14px;}
+.masthead-main{display:flex;flex-direction:column;justify-content:center;gap:2px;padding:12px 14px;border-right:1.5px solid var(--ink);text-align:center;}
+.masthead-main .co{font-weight:700;font-size:14px;}
+.masthead-main .title{font-weight:600;font-size:14px;color:var(--green-800);}
+.masthead-meta{display:flex;flex-direction:column;font-size:11px;}
+.masthead-meta div{display:flex;justify-content:space-between;gap:6px;padding:5px 10px;border-bottom:1px solid var(--line);}
+.masthead-meta div:last-child{border-bottom:none;}
+.masthead-meta span:first-child{color:var(--ink-soft);}
+.masthead-meta span:last-child{font-family:'IBM Plex Mono',monospace;font-weight:600;}
+
+.tabs{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap;}
+.tab{flex:1;min-width:120px;text-align:center;padding:10px 8px;border:1px solid var(--line-strong);border-radius:8px;background:var(--card);font-weight:600;font-size:13px;color:var(--ink-soft);cursor:pointer;user-select:none;}
+.tab.active{background:var(--ink);border-color:var(--ink);color:#fff;}
+.panel{display:none;}
+.panel.active{display:block;}
+
+.controls{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px;margin-bottom:14px;}
+.field{display:flex;flex-direction:column;gap:4px;}
+.field label{font-size:11px;font-weight:600;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.03em;}
+.field input{font-family:inherit;font-size:14px;padding:8px 10px;border:1px solid var(--line-strong);border-radius:6px;background:#fff;color:var(--ink);}
+.btn{font-family:inherit;font-weight:600;font-size:13.5px;padding:9px 16px;border-radius:7px;border:1px solid var(--line-strong);background:#fff;color:var(--ink);cursor:pointer;}
+.btn:active{transform:scale(.98);}
+.btn-primary{background:var(--green);border-color:var(--green);color:#fff;}
+.btn-danger{color:var(--red);border-color:var(--red-100);}
+.status-pill{font-size:11.5px;font-weight:600;padding:5px 10px;border-radius:20px;background:var(--green-100);color:var(--green-800);display:inline-block;}
+.status-pill.unsaved{background:var(--amber-100);color:var(--amber-800);}
+
+.tblwrap{overflow-x:auto;background:var(--card);border:1px solid var(--line);border-radius:10px;}
+table.grid{border-collapse:collapse;width:100%;min-width:820px;font-size:12.5px;}
+table.grid th{background:var(--ink);color:#fff;padding:6px 4px;font-size:10.5px;text-transform:uppercase;letter-spacing:.02em;text-align:center;}
+table.grid td{border-bottom:1px solid var(--line);padding:4px;text-align:center;}
+table.grid td.day{font-family:'IBM Plex Mono',monospace;font-weight:600;color:var(--ink-soft);width:34px;}
+.chip{width:28px;height:28px;border:1px solid var(--line-strong);border-radius:6px;background:var(--paper);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;font-weight:700;color:var(--line-strong);}
+.chip.on{background:var(--green-100);border-color:var(--green);color:var(--green);}
+.checkedby-input{width:90px;font-family:'Dancing Script',cursive;font-size:16px;font-weight:600;color:var(--green-800);border:1px solid var(--line);border-radius:5px;padding:3px 6px;text-align:center;}
+.footer-note{font-size:11.5px;color:var(--ink-soft);margin:12px 0;line-height:1.6;}
+.actionbar{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px;align-items:center;}
+.checkfield{display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600;color:var(--ink-soft);}
+
+.settings{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px;margin-bottom:14px;}
+.settings-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+.settings-row input{flex:1;min-width:220px;font-family:inherit;font-size:13px;padding:8px 10px;border:1px solid var(--line-strong);border-radius:6px;}
+.hint{font-size:11.5px;color:var(--ink-soft);margin-top:8px;line-height:1.5;}
+.hint code{background:var(--paper);padding:1px 5px;border-radius:4px;font-family:'IBM Plex Mono',monospace;font-size:11px;}
+.recrow{display:flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--line);border-radius:8px;padding:10px 12px;font-size:13px;margin-bottom:8px;}
+.recrow .m{font-weight:700;flex:1;}
+.recrow .btns{display:flex;gap:6px;}
+</style>
+
+<!-- Print styles: not applied to the app itself. JS copies this into a clean print window,
+     so the app layout / phone viewport can never shift the printed form. -->
+<style id="printStyles" media="not all">
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Dancing+Script:wght@600;700&display=swap');
+@page{ size: A4 portrait; margin: 8mm; }
+*{box-sizing:border-box;}
+html,body{
+  margin:0;padding:0;background:#fff;color:#000;
+  font-family:'Inter',sans-serif;
+  -webkit-print-color-adjust:exact;print-color-adjust:exact;
+}
+.ppage{
+  width:100%;max-width:194mm;   /* A4 210mm minus 2 x 8mm margin */
+  margin:0 auto;padding:0;
+}
+.ppage-head{display:grid;grid-template-columns:1fr 130px;border:1px solid #333;margin-bottom:8px;border-radius:3px;overflow:hidden;}
+.ppage-head .l{padding:7px 9px;display:flex;flex-direction:column;justify-content:center;gap:3px;border-right:1px solid #333;text-align:center;}
+.ppage-head .l b{font-size:12px;}
+.ppage-head .l span{font-size:11px;font-weight:600;color:#1B4A36;}
+.ppage-head .r{padding:6px 9px;display:flex;flex-direction:column;gap:2px;justify-content:center;text-align:left;}
+.ppage-head .r div{display:grid;grid-template-columns:54px 1fr;justify-content:start;text-align:left;font-size:9px;}
+.ppage-meta{font-size:11px;margin-bottom:7px;}
+.ptable{width:100%;border-collapse:collapse;font-size:9.5px;}
+.ptable th,.ptable td{border:0.75px solid #555;padding:3px 2px;text-align:center;}
+.ptable th{background:#f0f0f0;font-size:8.5px;}
+.ptable td.psig{font-family:'Dancing Script',cursive;font-size:12px;}
+.ppage-foot{font-size:8.5px;margin-top:6px;line-height:1.4;color:#333;}
 </style>
 </head>
 <body>
@@ -160,14 +175,13 @@
 
 </div>
 
-<div id="printRoot"></div>
-
 <script>
 function safeGet(k){ try{ return localStorage.getItem(k) || ''; }catch(e){ return ''; } }
 function safeSet(k,v){ try{ localStorage.setItem(k,v); }catch(e){} }
 
 const DEFAULT_API_URL = 'https://script.google.com/macros/s/AKfycbyYj39CIXLn3mnJBWo0o63KPLfdM93nWEJgd3as_uGfPbPDS-h8mx7ewYMN4yBJ6vTqKQ/exec';
 let apiUrl = DEFAULT_API_URL;
+
 const el = id => document.getElementById(id);
 const memStore = {};
 
@@ -178,6 +192,7 @@ const ITEMS = [
 ];
 
 function currentMonthKey(){ return new Date().toISOString().slice(0,7); }
+
 function blankDays(monthKey){
   // Always 31 rows, matching the paper form's fixed template — it's a
   // generic form reused for any month, not resized per actual month length.
@@ -189,12 +204,14 @@ function blankDays(monthKey){
   }
   return days;
 }
+
 function toInitials(v){
   const parts = (v||'').trim().split(/\s+/).filter(Boolean);
   if(parts.length===0) return '';
   if(parts.length===1) return parts[0];
   return parts.map(w=>w[0].toUpperCase()).join('');
 }
+
 function escapeHtml(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;'); }
 
 let state = { month: currentMonthKey(), days: blankDays(currentMonthKey()) };
@@ -205,6 +222,7 @@ function setStatus(text, kind){
   p.textContent = text;
   p.className = 'status-pill' + (kind==='unsaved' ? ' unsaved' : '');
 }
+
 function refreshApiBar(){
   const bar = el('apiBar');
   if(apiUrl){
@@ -232,6 +250,7 @@ async function apiGetMonth(month){
   }
   return memStore[month] || null;
 }
+
 async function apiSaveMonth(data){
   memStore[data.month] = data;
   if(!apiUrl) return {ok:false, reason:'no-url'};
@@ -247,6 +266,7 @@ async function apiSaveMonth(data){
     return {ok:true};
   }catch(e){ console.error('[toilet] SAVE: fetch failed:', e); return {ok:false, reason:'fetch-error', raw:String(e)}; }
 }
+
 async function apiDeleteMonth(month){
   if(!apiUrl) return {ok:false, reason:'no-url'};
   try{
@@ -258,6 +278,7 @@ async function apiDeleteMonth(month){
     return {ok:true};
   }catch(e){ return {ok:false, reason:'fetch-error', raw:String(e)}; }
 }
+
 async function apiListMonths(){
   if(apiUrl){
     try{
@@ -270,6 +291,70 @@ async function apiListMonths(){
   }
   return Object.keys(memStore).sort().reverse();
 }
+
+// ---------------- Print (clean separate window) ----------------
+function printCssText(){
+  const s = document.getElementById('printStyles');
+  return s ? s.textContent : '';
+}
+
+function openPrintWindow(){
+  const w = window.open('', '_blank');
+  if(!w) alert('Pop-up blocked. Please allow pop-ups for this site, then tap Print again.');
+  return w;
+}
+
+// Print from a clean, separate document so the app layout / phone viewport cannot shift the form.
+function writePrintWindow(w, data, includeHeader){
+  w.document.open();
+  w.document.write('<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8">'
+    + '<title>Toilet Cleanliness Checklist</title>'
+    + '<style>' + printCssText() + '</style></head><body>'
+    + buildPrintPage(data, includeHeader)
+    + '<script>window.addEventListener("load",function(){'
+    + 'var go=function(){setTimeout(function(){window.focus();window.print();},300);};'
+    + 'if(document.fonts&&document.fonts.ready){document.fonts.ready.then(go);}else{go();}'
+    + '});<\/script></body></html>');
+  w.document.close();
+}
+
+function buildPrintPage(data, includeHeader){
+  const rowsHtml = data.days.map(row=>{
+    const cells = ITEMS.map(it=>`<td>${row[it.k]?'✓':''}</td>`).join('');
+    return `<tr><td>${row.day}</td>${cells}<td class="psig">${escapeHtml(row.checkedBy)}</td></tr>`;
+  }).join('');
+  const headerHtml = includeHeader ? `
+    <div class="ppage-head">
+      <div class="l"><b>HEXA FOOD SDN. BHD. (HEXA 3)</b><span>TOILET CLEANLINESS CHECKLIST</span></div>
+      <div class="r">
+        <div><span>Doc No.:</span><span>HX3-F57</span></div>
+        <div><span>Issue No:</span><span>1</span></div>
+        <div><span>Issue Date:</span><span>01/03/2022</span></div>
+        <div><span>Page:</span><span>1 of 1</span></div>
+      </div>
+    </div>` : '';
+  return `
+  <div class="ppage">
+    ${headerHtml}
+    <div class="ppage-meta">Month/Year: <b>${data.month}</b></div>
+    <table class="ptable">
+      <thead>
+        <tr><th rowspan="2">Day</th><th colspan="${ITEMS.length}">Item</th><th rowspan="2">Checked by</th></tr>
+        <tr>${ITEMS.map(it=>`<th>${it.l.replace('<br>',' ')}</th>`).join('')}</tr>
+      </thead>
+      <tbody>${rowsHtml}</tbody>
+    </table>
+    <div class="ppage-foot">
+      Remark: Checking time : Morning<br>
+      Please (✓) when done checking / cleaning activities.
+    </div>
+  </div>`;
+}
+
+el('printBtn').addEventListener('click', ()=>{
+  const w = openPrintWindow(); if(!w) return;
+  writePrintWindow(w, state, el('printHeaderToggle').checked);
+});
 
 // ---------------- Records / Print list ----------------
 async function renderRecordsList(){
@@ -292,11 +377,10 @@ async function renderRecordsList(){
       goToMonth(m);
     });
     row.querySelector('[data-act="print"]').addEventListener('click', async ()=>{
+      const w = openPrintWindow(); if(!w) return;   // open first, inside the tap, so it is not blocked
       const data = await apiGetMonth(m);
-      if(!data){ alert('No data found for ' + m); return; }
-      const includeHeader = el('printHeaderToggle').checked;
-      el('printRoot').innerHTML = buildPrintPage(data, includeHeader);
-      window.print();
+      if(!data){ w.close(); alert('No data found for ' + m); return; }
+      writePrintWindow(w, data, el('printHeaderToggle').checked);
     });
     row.querySelector('[data-act="delete"]').addEventListener('click', async ()=>{
       if(!confirm('Delete all data for ' + m + '? This cannot be undone.')) return;
@@ -353,6 +437,7 @@ el('gridTable').addEventListener('click', e=>{
   renderGrid();
   scheduleAutoSave();
 });
+
 el('gridTable').addEventListener('input', e=>{
   const t = e.target;
   if(t.dataset.role==='checkedby'){
@@ -382,6 +467,7 @@ function scheduleAutoSave(){
   autoSaveTimer = setTimeout(doSave, 700);
 }
 el('saveBtn').addEventListener('click', doSave);
+
 el('deleteBtn').addEventListener('click', async ()=>{
   if(!confirm('Delete all data for ' + state.month + '? This cannot be undone.')) return;
   const res = await apiDeleteMonth(state.month);
@@ -393,45 +479,6 @@ el('deleteBtn').addEventListener('click', async ()=>{
   } else {
     alert('Could not delete — check Console (F12) or the Google Sheet connection.');
   }
-});
-
-// ---------------- Print ----------------
-function buildPrintPage(data, includeHeader){
-  const rowsHtml = data.days.map(row=>{
-    const cells = ITEMS.map(it=>`<td>${row[it.k]?'✓':''}</td>`).join('');
-    return `<tr><td>${row.day}</td>${cells}<td class="psig">${escapeHtml(row.checkedBy)}</td></tr>`;
-  }).join('');
-  const headerHtml = includeHeader ? `
-    <div class="ppage-head">
-      <div class="l"><b>HEXA FOOD SDN. BHD. (HEXA 3)</b><span>TOILET CLEANLINESS CHECKLIST</span></div>
-      <div class="r">
-        <div><span>Doc No.:</span><span>HX3-F57</span></div>
-        <div><span>Issue No:</span><span>1</span></div>
-        <div><span>Issue Date:</span><span>01/03/2022</span></div>
-        <div><span>Page:</span><span>1 of 1</span></div>
-      </div>
-    </div>` : '';
-  return `
-  <div>
-    ${headerHtml}
-    <div class="ppage-meta">Month/Year: <b>${data.month}</b></div>
-    <table class="ptable">
-      <thead>
-        <tr><th rowspan="2">Day</th><th colspan="${ITEMS.length}">Item</th><th rowspan="2">Checked by</th></tr>
-        <tr>${ITEMS.map(it=>`<th>${it.l.replace('<br>',' ')}</th>`).join('')}</tr>
-      </thead>
-      <tbody>${rowsHtml}</tbody>
-    </table>
-    <div class="ppage-foot">
-      Remark: Checking time : Morning<br>
-      Please (✓) when done checking / cleaning activities.
-    </div>
-  </div>`;
-}
-el('printBtn').addEventListener('click', ()=>{
-  const includeHeader = el('printHeaderToggle').checked;
-  el('printRoot').innerHTML = buildPrintPage(state, includeHeader);
-  window.print();
 });
 
 // ---------------- Google Sheet connection ----------------
@@ -451,6 +498,5 @@ document.querySelectorAll('.tab').forEach(tab=>{
 // ---------------- Init ----------------
 goToMonth(state.month);
 </script>
-
 </body>
 </html>
