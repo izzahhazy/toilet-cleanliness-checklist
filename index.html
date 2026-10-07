@@ -216,7 +216,17 @@ function escapeHtml(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;'
 
 let state = { month: currentMonthKey(), days: blankDays(currentMonthKey()) };
 let dirty = false;
+let loadOk = false;
+const dirtyDays = new Set();
 
+async function apiFetchMonthStrict(month){
+  try{
+    const res = await fetch(apiUrl + '?action=get&month=' + encodeURIComponent(month));
+    const j = JSON.parse(await res.text());
+    if(j && j.ok) return {ok:true, data:j.data || null};
+  }catch(e){ console.error('[toilet] strict GET failed:', e); }
+  return {ok:false};
+}
 function setStatus(text, kind){
   const p = el('statusPill');
   p.textContent = text;
@@ -411,16 +421,21 @@ function renderGrid(){
 }
 
 async function goToMonth(month){
-  const existing = await apiGetMonth(month);
-  if(existing){
-    state = existing;
-    setStatus('Existing record loaded');
-  } else {
-    state = { month, days: blankDays(month) };
-    setStatus('New record');
-  }
-  dirty = false;
+  loadOk = false;
+  dirtyDays.clear();
+  setStatus('Loading...','unsaved');
   el('monthInput').value = month;
+  let r = await apiFetchMonthStrict(month);
+  if(!r.ok) r = await apiFetchMonthStrict(month);   // cuba sekali lagi
+  if(!r.ok){
+    el('gridTable').innerHTML = '';
+    setStatus('Load failed — pilih bulan semula / refresh','unsaved');
+    return;
+  }
+  loadOk = true;
+  if(r.data){ state = r.data; setStatus('Existing record loaded'); }
+  else { state = { month, days: blankDays(month) }; setStatus('New record'); }
+  dirty = false;
   renderGrid();
 }
 
@@ -433,6 +448,7 @@ el('gridTable').addEventListener('click', e=>{
   if(!chip) return;
   const idx = +chip.dataset.idx, key = chip.dataset.item;
   state.days[idx][key] = !state.days[idx][key];
+  dirtyDays.add(idx);
   dirty = true; setStatus('Unsaved','unsaved');
   renderGrid();
   scheduleAutoSave();
@@ -452,9 +468,19 @@ el('gridTable').addEventListener('input', e=>{
 
 // ---------------- Save / Delete ----------------
 async function doSave(){
+  if(!loadOk) return;
   setStatus('Saving...','unsaved');
-  const res = await apiSaveMonth(state);
-  if(res.ok){ dirty=false; setStatus('Saved online ✓'); }
+  const snap = new Set(dirtyDays);
+  const fresh = await apiFetchMonthStrict(state.month);
+  if(!fresh.ok){ setStatus('Save failed — cuba lagi','unsaved'); return; }
+  const merged = fresh.data || { month: state.month, days: blankDays(state.month) };
+  snap.forEach(i => { merged.days[i] = state.days[i]; });
+  const res = await apiSaveMonth(merged);
+  if(res.ok){
+    snap.forEach(i => dirtyDays.delete(i));
+    dirty = dirtyDays.size > 0;
+    setStatus(dirty ? 'Unsaved' : 'Saved online ✓', dirty ? 'unsaved' : '');
+  }
   else if(res.reason==='no-url') setStatus('Saved on this device only','unsaved');
   else{
     setStatus('Save failed — see Console (F12)','unsaved');
