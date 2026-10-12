@@ -461,6 +461,7 @@ el('gridTable').addEventListener('input', e=>{
     const initials = toInitials(t.value);
     state.days[idx].checkedBy = initials;
     if(t.value !== initials) t.value = initials;
+    dirtyDays.add(idx);
     dirty = true; setStatus('Unsaved','unsaved');
     scheduleAutoSave();
   }
